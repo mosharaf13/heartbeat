@@ -22,8 +22,8 @@ Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'store'])->name('store');
-
+Route::post('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'store'])->name('store');
+Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

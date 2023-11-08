@@ -8,7 +8,13 @@ use Illuminate\Support\Facades\DB;
 class HeartBeatController extends Controller
 {
 
-    use Illuminate\Support\Facades\DB; // Import the DB facade
+    public function index()
+    {
+        // Use the DB facade to select all "heartbeat" records
+        $heartbeats = DB::table('heartbeats')->get();
+        // Return the "heartbeats" as a JSON response
+        return response()->json($heartbeats);
+    }
 
     public function store(Request $request)
     {
