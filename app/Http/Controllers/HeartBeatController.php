@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class HeartBeatController extends Controller
@@ -26,6 +27,8 @@ class HeartBeatController extends Controller
         // Use the DB facade to insert a new record
         DB::table('heartbeats')->insert([
             'heartbeat' => $request->input('heartbeat'),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
         ]);
 
         // Optionally, you can return a response to indicate success
