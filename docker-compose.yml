@@ -24,7 +24,6 @@ services:
             - fleet-searcher
         depends_on:
             - pgsql
-            - chromedriver
     pgsql:
         image: 'postgres:15'
         ports:
@@ -50,15 +49,6 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
-    chromedriver:
-        image: selenium/standalone-chrome-debug
-        ports:
-            - "4444:4444"
-            - "5900:5900"
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        networks:
-            - fleet-searcher
 networks:
     fleet-searcher:
         driver: bridge
