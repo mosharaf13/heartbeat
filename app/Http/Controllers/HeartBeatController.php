@@ -11,10 +11,19 @@ class HeartBeatController extends Controller
 
     public function index()
     {
-        // Use the DB facade to select all "heartbeat" records
-        $heartbeats = DB::table('heartbeats')->get();
-        // Return the "heartbeats" as a JSON response
-        return response()->json($heartbeats);
+        // Get the current time
+        $currentTime = now();
+
+        // Calculate the time 5 minutes ago
+        $fiveMinutesAgo = $currentTime->subMinutes(5);
+
+        // Use the DB facade to select the latest "heartbeat" records within the last 5 minutes
+        $latestHeartbeats = DB::table('heartbeats')
+            ->where('created_at', '>=', $fiveMinutesAgo)
+            ->get();
+
+        // Return the "latestHeartbeats" as a JSON response
+        return response()->json($latestHeartbeats);
     }
 
     public function store(Request $request)
