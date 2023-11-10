@@ -17,13 +17,14 @@ class HeartBeatController extends Controller
         // Calculate the time 5 minutes ago
         $fiveMinutesAgo = $currentTime->subMinutes(5);
 
-        // Use the DB facade to select the latest "heartbeat" records within the last 5 minutes
-        $latestHeartbeats = DB::table('heartbeats')
+        // Use the DB facade to select the latest "heartbeat" record within the last 5 minutes
+        $latestHeartbeat = DB::table('heartbeats')
             ->where('created_at', '>=', $fiveMinutesAgo)
-            ->get();
+            ->latest('created_at') // Order by created_at in descending order
+            ->first(); // Retrieve only the first record
 
-        // Return the "latestHeartbeats" as a JSON response
-        return response()->json($latestHeartbeats);
+        // Return the "latestHeartbeat" as a JSON response
+        return response()->json($latestHeartbeat);
     }
 
     public function store(Request $request)
