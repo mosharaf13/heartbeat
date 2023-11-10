@@ -1,5 +1,26 @@
 version: '3'
+
 services:
+    traefik:
+        image: "traefik:v2.5"
+        container_name: "traefik"
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            - "--certificatesresolvers.le.acme.httpchallenge=true"
+            - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+            - "--certificatesresolvers.le.acme.email=mosharafkuet@gmail.com"
+            - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+            - "./letsencrypt:/letsencrypt"
+
     laravel.test:
         build:
             context: ./vendor/laravel/sail/runtimes/8.2
@@ -9,10 +30,11 @@ services:
         image: sail-8.2/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-            - "8800:8800"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.laravel.rule=Host(`mosharaf.co`)"
+            - "traefik.http.routers.laravel.entrypoints=websecure"
+            - "traefik.http.services.laravel.loadbalancer.server.port=80"
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -24,6 +46,7 @@ services:
             - fleet-searcher
         depends_on:
             - pgsql
+
     pgsql:
         image: 'postgres:15'
         ports:
@@ -49,9 +72,11 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
+
 networks:
     fleet-searcher:
         driver: bridge
+
 volumes:
     fleet-searcher-pgsql:
         driver: local
