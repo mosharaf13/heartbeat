@@ -37,6 +37,8 @@ class HeartBeatController extends Controller
         // Use the DB facade to insert a new record
         DB::table('heartbeats')->insert([
             'heartbeat' => $request->input('heartbeat'),
+            'variation' => $request->input('variation'),
+            'player_id' => $request->input('player_id'),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
         ]);
