@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('heartbeats', function (Blueprint $table) {
             $table->id();
-            $table->string('heartbeat');
+            $table->integer('heartbeat');
+            $table->string('variation');
+            $table->string('player_id');
             $table->timestamps();
         });
     }
