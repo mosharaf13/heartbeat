@@ -21,7 +21,7 @@ class HeartBeatController extends Controller
         $latestHeartbeat = DB::table('heartbeats')
             ->where('created_at', '>=', $fiveMinutesAgo)
             ->latest('created_at') // Order by created_at in descending order
-            ->first(); // Retrieve only the first record
+            ->get();
 
         // Return the "latestHeartbeat" as a JSON response
         return response()->json($latestHeartbeat);
