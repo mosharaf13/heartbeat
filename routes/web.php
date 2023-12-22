@@ -25,7 +25,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get('/heartbeat/submit', [App\Http\Controllers\HeartBeatController::class, 'store'])->name('store');
 Route::get('/heartbeat/update', [App\Http\Controllers\HeartBeatController::class, 'update'])->name('update');
 
-Route::get('/heartbeat/latesst', [App\Http\Controllers\HeartBeatController::class, 'latest'])->name('index');
+Route::get('/heartbeat/latest', [App\Http\Controllers\HeartBeatController::class, 'latest'])->name('index');
 Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
 
 Route::middleware('auth:sanctum')->group(function () {
