@@ -39,6 +39,7 @@ class HeartBeatController extends Controller
             'heartbeat' => $request->input('heartbeat'),
             'variation' => $request->input('variation'),
             'player_id' => $request->input('player_id'),
+            'player_score' => $request->input('player_score', null),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
         ]);
