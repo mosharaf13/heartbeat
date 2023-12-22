@@ -23,6 +23,7 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/heartbeat/submit', [App\Http\Controllers\HeartBeatController::class, 'store'])->name('store');
+Route::get('/heartbeat/update', [App\Http\Controllers\HeartBeatController::class, 'update'])->name('update');
 
 Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
 
