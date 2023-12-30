@@ -73,7 +73,7 @@ class HeartBeatController extends Controller
             ->avg();
 
         // Return the "latestHeartbeat" as a JSON response
-        return response()->json($threshold);
+        return $threshold;
     }
 
     public function store(Request $request)
