@@ -45,6 +45,33 @@ class HeartBeatController extends Controller
         return response()->json($latestHeartbeat);
     }
 
+    public function threshold()
+    {
+        // Get the current time
+        $currentTime = now();
+
+        // Calculate the time 5 minutes ago
+        $fiveMinutesAgo = $currentTime->subMinutes(5);
+
+        // Use the DB facade to select the latest "heartbeat" record within the last 5 minutes
+        $latestHeartbeat = DB::table('heartbeats')
+            ->where('created_at', '>=', $fiveMinutesAgo)
+            ->latest('created_at') // Order by created_at in descending order
+            ->first();
+
+        // Use the DB facade to select the latest "heartbeat" record within the last 5 minutes
+        $threshold = DB::table('heartbeats')
+            ->where('player_id', $latestHeartbeat->player_id)
+            ->where('created_at', '>=', $fiveMinutesAgo)
+            ->orderBy('created_at', 'asc')
+            ->limit(10)
+            ->pluck('heartbeat')
+            ->avg();
+
+        // Return the "latestHeartbeat" as a JSON response
+        return response()->json($threshold);
+    }
+
     public function store(Request $request)
     {
         // Validate the request data as needed
