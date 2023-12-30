@@ -59,6 +59,10 @@ class HeartBeatController extends Controller
             ->latest('created_at') // Order by created_at in descending order
             ->first();
 
+        if(is_null($latestHeartbeat)){
+            return 0;
+        }
+
         // Use the DB facade to select the latest "heartbeat" record within the last 5 minutes
         $threshold = DB::table('heartbeats')
             ->where('player_id', $latestHeartbeat->player_id)
