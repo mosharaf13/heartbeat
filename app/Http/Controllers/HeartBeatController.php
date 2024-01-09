@@ -101,7 +101,10 @@ class HeartBeatController extends Controller
     {
 
         DB::table('heartbeats')->where('player_id', $request->input('player_id'))
-            ->update(['player_score' => $request->input('player_score', null)]);
+            ->update([
+                'player_score' => $request->input('player_score', null),
+                'variation' => $request->input('variation', null),
+            ]);
 
         // Optionally, you can return a response to indicate success
         return response()->json(['message' => 'Heartbeat record updated successfully'], 201);
