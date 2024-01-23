@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HeartbeatExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,7 @@ Route::get('/heartbeat/update', [App\Http\Controllers\HeartBeatController::class
 Route::get('/heartbeat/latest', [App\Http\Controllers\HeartBeatController::class, 'latest'])->name('index');
 Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
 Route::get('/heartbeat/threshold', [App\Http\Controllers\HeartBeatController::class, 'threshold'])->name('threshold');
+Route::get('/export-heartbeats', [HeartbeatExportController::class, 'export']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
