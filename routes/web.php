@@ -28,8 +28,12 @@ Route::get('/heartbeat/update', [App\Http\Controllers\HeartBeatController::class
 
 Route::get('/heartbeat/latest', [App\Http\Controllers\HeartBeatController::class, 'latest'])->name('index');
 Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
+Route::get('/heartbeats', [App\Http\Controllers\HeartBeatController::class, 'all'])->name('all');
+Route::get('/populate/threshold', [App\Http\Controllers\HeartBeatController::class, 'populateThreshold'])->name('populate-threshold');
+
 Route::get('/heartbeat/threshold', [App\Http\Controllers\HeartBeatController::class, 'threshold'])->name('threshold');
 Route::get('/export-heartbeats', [HeartbeatExportController::class, 'export']);
+Route::post('/import-excel', [App\Http\Controllers\HeartBeatController::class, 'importExcel']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

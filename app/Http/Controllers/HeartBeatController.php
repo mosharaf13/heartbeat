@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\HeartbeatsImport;
 
 class HeartBeatController extends Controller
 {
@@ -26,6 +28,88 @@ class HeartBeatController extends Controller
         // Return the "latestHeartbeat" as a JSON response
         return response()->json($latestHeartbeat);
     }
+
+    public function importExcel(Request $request)
+    {
+        $file = $request->file('excel');
+        Excel::import(new HeartbeatsImport, $file);
+
+        return back()->with('success', 'Excel data imported successfully.');
+    }
+
+    public function populateThreshold()
+    {
+        $playerIds = DB::table('heartbeats')->select('player_id')->distinct()->pluck('player_id');
+
+        foreach ($playerIds as $playerId) {
+            // Select the first 5 heartbeats for each player_id
+            $firstFiveHeartbeats = DB::table('heartbeats')
+                ->where('player_id', $playerId)
+                ->orderBy('created_at')
+                ->take(4)
+                ->pluck('heartbeat'); // Replace 'heartbeat_value' with the actual column name
+
+            if ($firstFiveHeartbeats->isNotEmpty()) {
+                // Calculate the average
+                $average = $firstFiveHeartbeats->average();
+
+                // Update the threshold for all records of this player
+                DB::table('heartbeats')
+                    ->where('player_id', $playerId)
+                    ->update(['threshold' => $average+5]);
+            }
+        }
+
+        return response()->json('successful');
+    }
+
+    public function all()
+    {
+        // Get all variations
+        $variations = DB::table('heartbeats')->distinct()->pluck('variation');
+
+        foreach ($variations as $variation) {
+            // Counter for each variation
+            $breachCounter = 0;
+
+            // Get distinct player_ids for this variation
+            $playerIds = DB::table('heartbeats')
+                ->where('variation', $variation)
+                ->distinct()
+                ->pluck('player_id');
+
+            foreach ($playerIds as $playerId) {
+                // Check if there's a breach in this set
+                $breachExists = DB::table('heartbeats')
+                    ->where('variation', $variation)
+                    ->where('player_id', $playerId)
+                    ->where('heartbeat', '>=', DB::raw('threshold'))
+                    ->exists();
+
+                if ($breachExists) {
+                    // Increment breach counter for this variation
+                    $breachCounter++;
+
+                    // Update all rows in this set
+                    DB::table('heartbeats')
+                        ->where('variation', $variation)
+                        ->where('player_id', $playerId)
+                        ->update(['threshold_breach_status' => $breachCounter]);
+                } else {
+                    // Update all rows in this set with the current counter value
+                    DB::table('heartbeats')
+                        ->where('variation', $variation)
+                        ->where('player_id', $playerId)
+                        ->update(['threshold_breach_status' => $breachCounter]);
+                }
+            }
+        }
+
+        // Return the response
+        return response()->json('successful');
+    }
+
+
 
     public function latest()
     {
