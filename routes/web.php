@@ -30,6 +30,9 @@ Route::get('/heartbeat/latest', [App\Http\Controllers\HeartBeatController::class
 Route::get('/heartbeat', [App\Http\Controllers\HeartBeatController::class, 'index'])->name('index');
 Route::get('/heartbeats', [App\Http\Controllers\HeartBeatController::class, 'all'])->name('all');
 Route::get('/populate/threshold', [App\Http\Controllers\HeartBeatController::class, 'populateThreshold'])->name('populate-threshold');
+Route::get('/calculate-threshold-breach', [App\Http\Controllers\HeartBeatController::class, 'calculateThresholdBreach'])->name('calculate-threshold-breach');
+Route::get('/calculate-gameplay-time', [App\Http\Controllers\HeartBeatController::class, 'calculateGameplayTime'])->name('calculate-threshold-breach');
+
 
 Route::get('/heartbeat/threshold', [App\Http\Controllers\HeartBeatController::class, 'threshold'])->name('threshold');
 Route::get('/export-heartbeats', [HeartbeatExportController::class, 'export']);

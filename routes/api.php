@@ -17,6 +17,7 @@ use App\Http\Controllers\SearcherController;
 */
 
 Route::post('login', [AuthController::class, 'login']);
+Route::get('/sendChartData', [App\Http\Controllers\HeartBeatController::class, 'sendChartData'])->name('sendChartData');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
