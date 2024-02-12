@@ -18,6 +18,8 @@ use App\Http\Controllers\SearcherController;
 
 Route::post('login', [AuthController::class, 'login']);
 Route::get('/sendChartData', [App\Http\Controllers\HeartBeatController::class, 'sendChartData'])->name('sendChartData');
+Route::get('/send-heart-beat-chart-data', [App\Http\Controllers\HeartBeatController::class, 'sendHeartbeatChartData'])->name('send-heartbeat-chart-data');
+Route::get('/send-threshold-breach-data', [App\Http\Controllers\HeartBeatController::class, 'sendThresholdBreachData'])->name('send-threshold-breach-data');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');

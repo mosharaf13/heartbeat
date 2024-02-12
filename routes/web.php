@@ -32,10 +32,15 @@ Route::get('/heartbeats', [App\Http\Controllers\HeartBeatController::class, 'all
 Route::get('/populate/threshold', [App\Http\Controllers\HeartBeatController::class, 'populateThreshold'])->name('populate-threshold');
 Route::get('/calculate-threshold-breach', [App\Http\Controllers\HeartBeatController::class, 'calculateThresholdBreach'])->name('calculate-threshold-breach');
 Route::get('/calculate-gameplay-time', [App\Http\Controllers\HeartBeatController::class, 'calculateGameplayTime'])->name('calculate-threshold-breach');
+Route::get('/adjust-rows', [App\Http\Controllers\HeartBeatController::class, 'adjustRows'])->name('adjust-rows');
+Route::get('/check-variation-row-counts', [App\Http\Controllers\HeartBeatController::class, 'checkVariationRowCounts'])->name('check-variation-row-counts');
 
 
 Route::get('/heartbeat/threshold', [App\Http\Controllers\HeartBeatController::class, 'threshold'])->name('threshold');
 Route::get('/export-heartbeats', [HeartbeatExportController::class, 'export']);
+Route::get('/export-heartbeats-by-variation', [HeartbeatExportController::class, 'exportByVariation']);
+Route::get('/export-heartbeats-by-gender', [HeartbeatExportController::class, 'exportByGender']);
+
 Route::post('/import-excel', [App\Http\Controllers\HeartBeatController::class, 'importExcel']);
 
 Route::middleware('auth:sanctum')->group(function () {

@@ -72,6 +72,103 @@ class HeartBeatController extends Controller
         return response()->json($data);
     }
 
+    public function adjustRows()
+    {
+        $playerNumbers = DB::table('heartbeats')->select('player_number')->distinct()->pluck('player_number');
+
+        foreach ($playerNumbers as $playerNumber) {
+            $variations = DB::table('heartbeats')->where('player_number', $playerNumber)
+                ->select('variation')
+                ->distinct()
+                ->pluck('variation');
+
+            // Check if the player number has all required variations
+            if ($variations->count() < 3) {
+                // If not all variations are present, delete all records for this player number
+                DB::table('heartbeats')->where('player_number', $playerNumber)->delete();
+            } else {
+                // Find the minimum number of rows among the variations for this player number
+                $minRows = null;
+                foreach ($variations as $variation) {
+                    $count = DB::table('heartbeats')->where('player_number', $playerNumber)
+                        ->where('variation', $variation)
+                        ->count();
+
+                    if (is_null($minRows) || $count < $minRows) {
+                        $minRows = $count;
+                    }
+                }
+
+                // Adjust rows for each variation
+                foreach ($variations as $variation) {
+                    $heartbeatIds = DB::table('heartbeats')
+                        ->where('player_number', $playerNumber)
+                        ->where('variation', $variation)
+                        ->orderBy('created_at', 'asc')
+                        ->pluck('id');
+
+                    if ($heartbeatIds->count() > $minRows) {
+                        // Calculate indices to keep
+                        $indicesToKeep = range(0, $minRows - 1);
+                        $idsToKeep = $heartbeatIds->only($indicesToKeep)->all();
+
+                        // Delete records not in the idsToKeep array
+                        DB::table('heartbeats')
+                            ->where('player_number', $playerNumber)
+                            ->where('variation', $variation)
+                            ->whereNotIn('id', $idsToKeep)
+                            ->delete();
+                    }
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Rows adjusted successfully.']);
+    }
+
+    public function checkVariationRowCounts()
+    {
+        $playerNumbers = DB::table('heartbeats')->select('player_number')->distinct()->pluck('player_number');
+        $variationCounts = []; // Store counts for each player number and variation
+
+        foreach ($playerNumbers as $playerNumber) {
+            $variations = DB::table('heartbeats')->where('player_number', $playerNumber)
+                ->select('variation')
+                ->distinct()
+                ->pluck('variation');
+
+            foreach ($variations as $variation) {
+                $count = DB::table('heartbeats')->where('player_number', $playerNumber)
+                    ->where('variation', $variation)
+                    ->count();
+
+                // Initialize player number in array if not already present
+                if (!isset($variationCounts[$playerNumber])) {
+                    $variationCounts[$playerNumber] = [];
+                }
+
+                $variationCounts[$playerNumber][$variation] = $count;
+            }
+        }
+
+        // Analyze the counts to check consistency
+        $inconsistencies = [];
+        foreach ($variationCounts as $playerNumber => $counts) {
+            if (count(array_unique($counts)) > 1) {
+                // If counts are not the same for all variations, log an inconsistency
+                $inconsistencies[] = "Player Number {$playerNumber} has inconsistent row counts across variations.";
+            }
+        }
+
+        if (empty($inconsistencies)) {
+            return response()->json(['message' => 'All player numbers have the same number of rows for each variation.']);
+        } else {
+            return response()->json(['message' => 'Inconsistencies found:', 'details' => $inconsistencies]);
+        }
+    }
+
+
+
     public function calculateThresholdBreach()
     {
         // Get all variations
@@ -160,7 +257,54 @@ class HeartBeatController extends Controller
         return response()->json($chartData);
     }
 
-// Helper function to generate random color for each dataset
+    public function sendHeartbeatChartData()
+    {
+        $players = DB::table('heartbeats')->distinct()->pluck('player_number');
+        $variations = DB::table('heartbeats')->distinct()->pluck('variation');
+
+        $chartData = [
+            'labels' => $players->all(),
+            'datasets' => [],
+        ];
+
+        foreach ($variations as $variation) {
+            $dataset = [
+                'label' => "Variation $variation",
+                'data' => [],
+                'backgroundColor' => $this->getRandomColor(),
+            ];
+
+            foreach ($players as $player) {
+                $heartbeats = DB::table('heartbeats')
+                    ->where('player_number', $player)
+                    ->where('variation', $variation)
+                    ->orderBy('updated_at')
+                    ->get(['heartbeat']);
+
+                if ($heartbeats->count() > 1) {
+                    $changes = collect();
+
+                    for ($i = 0; $i < $heartbeats->count() - 1; $i++) {
+                        // Calculate the difference between consecutive heartbeats
+                        $change = $heartbeats[$i + 1]->heartbeat - $heartbeats[$i]->heartbeat;
+                        $changes->push($change);
+                    }
+
+                    $averageChange = $changes->average();
+                } else {
+                    $averageChange = 0;
+                }
+
+
+                array_push($dataset['data'], $averageChange);
+            }
+
+            array_push($chartData['datasets'], $dataset);
+        }
+
+        return response()->json($chartData);
+    }
+
     protected function getRandomColor() {
         return '#' . substr(md5(rand()), 0, 6);
     }
@@ -213,6 +357,38 @@ class HeartBeatController extends Controller
         return response()->json($averageTimeByVariation);
     }
 
+    public function sendThresholdBreachData()
+    {
+        $players = DB::table('heartbeats')->distinct()->pluck('player_number');
+        $variations = DB::table('heartbeats')->distinct()->pluck('variation');
+
+        $chartData = [
+            'labels' => $players->all(),
+            'datasets' => [],
+        ];
+
+        foreach ($variations as $variation) {
+            $dataset = [
+                'label' => "Variation $variation",
+                'data' => [],
+                'backgroundColor' => $this->getRandomColor(),
+            ];
+
+            foreach ($players as $player) {
+                $breaches = DB::table('heartbeats')
+                    ->where('player_number', $player)
+                    ->where('variation', $variation)
+                    ->whereColumn('heartbeat', '>=', 'threshold')
+                    ->count();
+
+                array_push($dataset['data'], $breaches);
+            }
+
+            array_push($chartData['datasets'], $dataset);
+        }
+
+        return response()->json($chartData);
+    }
 
     public function latest()
     {

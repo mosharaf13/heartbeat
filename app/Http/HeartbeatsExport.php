@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exports;
+namespace App\Http;
 
 use App\Models\Heartbeat;
 use Maatwebsite\Excel\Concerns\FromCollection;
