@@ -12,7 +12,8 @@
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.2",
         "maatwebsite/excel": "^3.1",
-        "php-webdriver/webdriver": "^1.14"
+        "php-webdriver/webdriver": "^1.14",
+        "markrogoyski/math-php": "2.*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

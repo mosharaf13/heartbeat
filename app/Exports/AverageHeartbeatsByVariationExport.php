@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class HeartbeatsByVariationExport implements FromCollection, WithMapping
+class AverageHeartbeatsByVariationExport implements FromCollection, WithMapping
 {
     public function collection()
     {
@@ -24,21 +24,19 @@ class HeartbeatsByVariationExport implements FromCollection, WithMapping
 
             // Preparing data for each variation
             for ($variation = 1; $variation <= 3; $variation++) {
-                $variationData = $playerHeartbeats->where('variation', $variation)->pluck('heartbeat')->all();
-                $maxHeartbeats = max($maxHeartbeats, count($variationData));
+                $variationData = $playerHeartbeats->where('variation', $variation)->pluck('heartbeat')->avg();
                 $playerRows[$variation] = $variationData;
             }
 
-            // Padding data and assembling rows
-            for ($i = 0; $i < $maxHeartbeats; $i++) {
-                $row = [];
-                for ($variation = 1; $variation <= 3; $variation++) {
-                    $row[] = $playerRows[$variation][$i] ?? null;
-                }
-                $row[] = $playerNumber;
-                $row[] = $playerHeartbeats[0]->gender;
-                $rows->push($row);
+
+            $row = [];
+            for ($variation = 1; $variation <= 3; $variation++) {
+                $row[] = $playerRows[$variation];
             }
+            $row[] = $playerNumber;
+            $row[] = $playerHeartbeats[0]->gender;
+            $rows->push($row);
+
         }
 
         return $rows;

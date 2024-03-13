@@ -27,7 +27,7 @@ class ValidateSingleGameplayTable extends Command
      */
     public function handle(): void
     {
-        $playerData = DB::table('heartbeats_single_gameplay')->select('player_number', 'variation', 'player_id')
+        $playerData = DB::table('heartbeats_single_gameplays')->select('player_number', 'variation', 'player_id')
             ->groupBy('player_number', 'variation', 'player_id')
             ->get();
 

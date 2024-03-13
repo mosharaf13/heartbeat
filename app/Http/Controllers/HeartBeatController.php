@@ -126,6 +126,60 @@ class HeartBeatController extends Controller
         return response()->json(['message' => 'Rows adjusted successfully.']);
     }
 
+    public function adjustRowsSingleGameplay()
+    {
+        $playerNumbers = DB::table('heartbeats_single_gameplay')->select('player_number')->distinct()->pluck('player_number');
+
+        foreach ($playerNumbers as $playerNumber) {
+            $variations = DB::table('heartbeats_single_gameplay')->where('player_number', $playerNumber)
+                ->select('variation')
+                ->distinct()
+                ->pluck('variation');
+
+            // Check if the player number has all required variations
+            if ($variations->count() < 3) {
+                // If not all variations are present, delete all records for this player number
+                DB::table('heartbeats_single_gameplay')->where('player_number', $playerNumber)->delete();
+            } else {
+                // Find the minimum number of rows among the variations for this player number
+                $minRows = null;
+                foreach ($variations as $variation) {
+                    $count = DB::table('heartbeats_single_gameplay')->where('player_number', $playerNumber)
+                        ->where('variation', $variation)
+                        ->count();
+
+                    if (is_null($minRows) || $count < $minRows) {
+                        $minRows = $count;
+                    }
+                }
+
+                // Adjust rows for each variation
+                foreach ($variations as $variation) {
+                    $heartbeatIds = DB::table('heartbeats_single_gameplay')
+                        ->where('player_number', $playerNumber)
+                        ->where('variation', $variation)
+                        ->orderBy('created_at', 'asc')
+                        ->pluck('id');
+
+                    if ($heartbeatIds->count() > $minRows) {
+                        // Calculate indices to keep
+                        $indicesToKeep = range(0, $minRows - 1);
+                        $idsToKeep = $heartbeatIds->only($indicesToKeep)->all();
+
+                        // Delete records not in the idsToKeep array
+                        DB::table('heartbeats_single_gameplay')
+                            ->where('player_number', $playerNumber)
+                            ->where('variation', $variation)
+                            ->whereNotIn('id', $idsToKeep)
+                            ->delete();
+                    }
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Rows adjusted successfully.']);
+    }
+
     public function checkVariationRowCounts()
     {
         $playerNumbers = DB::table('heartbeats')->select('player_number')->distinct()->pluck('player_number');
@@ -172,21 +226,21 @@ class HeartBeatController extends Controller
     public function calculateThresholdBreach()
     {
         // Get all variations
-        $variations = DB::table('heartbeats')->distinct()->pluck('variation');
+        $variations = DB::table('heartbeats_single_gameplays')->distinct()->pluck('variation');
 
         foreach ($variations as $variation) {
             // Counter for each variation
             $breachCounter = 0;
 
             // Get distinct player_ids for this variation
-            $playerIds = DB::table('heartbeats')
+            $playerIds = DB::table('heartbeats_single_gameplays')
                 ->where('variation', $variation)
                 ->distinct()
                 ->pluck('player_id');
 
             foreach ($playerIds as $playerId) {
                 // Check if there's a breach in this set
-                $breachExists = DB::table('heartbeats')
+                $breachExists = DB::table('heartbeats_single_gameplays')
                     ->where('variation', $variation)
                     ->where('player_id', $playerId)
                     ->where('heartbeat', '>=', DB::raw('threshold'))
@@ -197,13 +251,13 @@ class HeartBeatController extends Controller
                     $breachCounter++;
 
                     // Update all rows in this set
-                    DB::table('heartbeats')
+                    DB::table('heartbeats_single_gameplays')
                         ->where('variation', $variation)
                         ->where('player_id', $playerId)
                         ->update(['threshold_breach_status' => $breachCounter]);
                 } else {
                     // Update all rows in this set with the current counter value
-                    DB::table('heartbeats')
+                    DB::table('heartbeats_single_gameplays')
                         ->where('variation', $variation)
                         ->where('player_id', $playerId)
                         ->update(['threshold_breach_status' => $breachCounter]);
@@ -238,12 +292,15 @@ class HeartBeatController extends Controller
                     ->where('player_number', $player)
                     ->where('variation', $variation)
                     ->pluck('updated_at');
-
                 if ($playingTimes->count() >= 2) {
                     $startTime = new \DateTime($playingTimes->first());
                     $endTime = new \DateTime($playingTimes->last());
-                    $totalTime = $startTime->diff($endTime)->s;
-                    $averageTime = $totalTime; // If you need to do more complex average calculations, adjust here
+//                    dd($startTime, $endTime);
+                    $interval = $endTime->diff($startTime);
+
+                    $seconds = ($interval->days * 24 * 60 * 60) + ($interval->h * 60 * 60) + ($interval->i * 60) + $interval->s;
+
+                    $averageTime = $seconds; // If you need to do more complex average calculations, adjust here
                 } else {
                     $averageTime = 0;
                 }
@@ -254,6 +311,7 @@ class HeartBeatController extends Controller
             array_push($chartData['datasets'], $dataset);
         }
 
+        dd($chartData);
         return response()->json($chartData);
     }
 

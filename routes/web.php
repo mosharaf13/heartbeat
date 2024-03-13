@@ -39,7 +39,11 @@ Route::get('/check-variation-row-counts', [App\Http\Controllers\HeartBeatControl
 Route::get('/heartbeat/threshold', [App\Http\Controllers\HeartBeatController::class, 'threshold'])->name('threshold');
 Route::get('/export-heartbeats', [HeartbeatExportController::class, 'export']);
 Route::get('/export-heartbeats-by-variation', [HeartbeatExportController::class, 'exportByVariation']);
+Route::get('/export-average-heartbeats-by-variation', [HeartbeatExportController::class, 'exportAverageByVariation']);
 Route::get('/export-heartbeats-by-gender', [HeartbeatExportController::class, 'exportByGender']);
+Route::get('/export-heartbeat-change-by-variation', [HeartbeatExportController::class, 'exportHeartBeatChangeByVariation']);
+Route::get('/export-player-thresholds', [HeartbeatExportController::class, 'exportPlayerThresholds']);
+Route::get('/export-player-gameplay-times', [HeartbeatExportController::class, 'exportPlayerGameplayTimes']);
 
 Route::post('/import-excel', [App\Http\Controllers\HeartBeatController::class, 'importExcel']);
 

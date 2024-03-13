@@ -20,45 +20,64 @@ class PopulateSingleGameplayTable extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Populates single gameplay table with last valid player_id entries';
 
     /**
      * Execute the console command.
      */
     public function handle(): void
     {
-        $subQuery = Heartbeat::select(DB::raw('MAX(created_at) as max_created_at'), 'variation', 'player_number')
-            ->groupBy('variation', 'player_number');
+        $playerNumbers = Heartbeat::select('player_number')->distinct()->pluck('player_number');
 
-        $lastPlayerIds = DB::table(DB::raw("({$subQuery->toSql()}) as sub"))
-            ->join('heartbeats', function ($join) {
-                $join->on('heartbeats.variation', '=', 'sub.variation')
-                    ->on('heartbeats.player_number', '=', 'sub.player_number')
-                    ->on('heartbeats.created_at', '=', 'sub.max_created_at');
-            })
-            ->mergeBindings($subQuery->getQuery()) // This is important to merge SQL bindings
-            ->select('heartbeats.player_id')
-            ->get()
-            ->pluck('player_id');
+        foreach ($playerNumbers as $playerNumber) {
+            $variations = Heartbeat::where('player_number', $playerNumber)
+                ->select('variation')
+                ->distinct()
+                ->pluck('variation');
 
-        $rowsToInsert = Heartbeat::whereIn('player_id', $lastPlayerIds)->get();
+            foreach ($variations as $variation) {
+                // Use a subquery to order the results before applying DISTINCT on player_id
+                $playerIds = Heartbeat::where('player_number', $playerNumber)
+                    ->where('variation', $variation)
+                    ->orderBy('created_at', 'desc')
+                    ->get(['player_id', 'created_at']) // Include 'created_at' to satisfy SQL mode restrictions
+                    ->unique('player_id') // Apply unique filter on collection instead of SQL query
+                    ->take(2)
+                    ->pluck('player_id');
 
-        foreach ($rowsToInsert as $row) {
-//            dd($row);
-            DB::table('heartbeats_single_gameplay')->insert([
-                // Assuming you have similar column names in the target table
-                // You need to replace these with actual column names of your target table
-                'heartbeat' => $row->heartbeat,
-                'variation' => $row->variation,
-                'player_id' => $row->player_id,
-                'created_at' => $row->created_at,
-                'updated_at' => $row->updated_at,
-                'player_score' => $row->player_score,
-                'player_number' => $row->player_number,
-                'threshold' => $row->threshold,
-                'threshold_breach_status' => $row->threshold_breach_status,
-                'gender' => $row->gender,
-            ]);
+                foreach ($playerIds as $playerId) {
+                    $rowCount = Heartbeat::where('player_number', $playerNumber)
+                        ->where('variation', $variation)
+                        ->where('player_id', $playerId)
+                        ->count();
+
+                    if ($rowCount > 2) {
+                        $rowsToInsert = Heartbeat::where('player_number', $playerNumber)
+                            ->where('variation', $variation)
+                            ->where('player_id', $playerId)
+                            ->get();
+
+                        foreach ($rowsToInsert as $row) {
+                            DB::table('heartbeats_single_gameplays')->insert([
+                                'heartbeat' => $row->heartbeat,
+                                'variation' => $row->variation,
+                                'player_id' => $row->player_id,
+                                'created_at' => $row->created_at,
+                                'updated_at' => $row->updated_at,
+                                'player_score' => $row->player_score,
+                                'player_number' => $row->player_number,
+                                'threshold' => $row->threshold,
+                                'threshold_breach_status' => $row->threshold_breach_status,
+                                'gender' => $row->gender,
+                            ]);
+                        }
+                        break;
+                    }
+                }
+            }
         }
+
+        $this->info('Single gameplay table populated successfully.');
     }
+
 }
